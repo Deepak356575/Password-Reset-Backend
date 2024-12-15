@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const app = express();
 
 // CORS configuration with more specific options
+app.use(express.json());
 app.use(cors({
     origin: [
         'http://localhost:3000',
