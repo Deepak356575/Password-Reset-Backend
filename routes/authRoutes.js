@@ -15,21 +15,12 @@ router.get('/health', (req, res) => {
         message: "Password Reset API is running",
         endpoints: {
             auth: {
-                register: "/api/auth/register",
-                login: "/api/auth/login",
-                forgotPassword: "/api/auth/forgot-password",
-                resetPassword: "/api/auth/reset-password/:token",
-                verifyToken: "/api/auth/verify-token/:token"
+                register: "/api/auth/register",          // Removed [POST]
+                login: "/api/auth/login",               // Removed [POST]
+                forgotPassword: "/api/auth/forgot-password", // Removed [POST]
+                resetPassword: "/api/auth/reset-password/:token"  // Added :token parameter
             },
-            health: "/health"
-        },
-        methods: {
-            register: "POST",
-            login: "POST",
-            forgotPassword: "POST",
-            resetPassword: "POST",
-            verifyToken: "GET",
-            health: "GET"
+            health: "/health"                           // Removed [GET]
         }
     });
 });
