@@ -22,6 +22,14 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
+
+// Add this to see what data is being saved
+userSchema.pre('save', function(next) {
+    console.log('Attempting to save user with data:', this.toObject());
+    next();
+});
+
+
 // Hash password before saving
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();

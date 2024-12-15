@@ -5,18 +5,33 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 // Register user
+// controllers/authController.js
+
 exports.register = async (req, res) => {
     try {
-
-        console.log('Received registration data:', req.body);
+        // Add detailed logging
+        console.log('Received request body:', req.body);
+        console.log('Content-Type:', req.headers['content-type']);
 
         const { username, email, password } = req.body;
+
+        // Add validation logging
+        console.log('Extracted data:', { 
+            username: username || 'missing', 
+            email: email || 'missing', 
+            password: password ? 'provided' : 'missing' 
+        });
 
         // Validate required fields
         if (!username || !email || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide all required fields'
+                message: 'Please provide all required fields',
+                missing: {
+                    username: !username,
+                    email: !email,
+                    password: !password
+                }
             });
         }
 
@@ -33,12 +48,11 @@ exports.register = async (req, res) => {
         const newUser = new User({
             username,
             email,
-            password // assuming you're hashing this in your User model
+            password
         });
 
         await newUser.save();
 
-        // Send success response
         return res.status(201).json({
             success: true,
             message: 'User registered successfully',
