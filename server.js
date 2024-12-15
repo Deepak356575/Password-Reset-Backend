@@ -36,20 +36,22 @@ mongoose.connect(process.env.MONGODB_URI)
     });
 
 // Root route with API documentation
+// Root route with API documentation
 app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Password Reset API is running',
-        endpoints: {
-            auth: {
-                register: '/api/auth/register [POST]',
-                login: '/api/auth/login [POST]',
-                forgotPassword: '/api/auth/forgot-password [POST]',
-                resetPassword: '/api/auth/reset-password [POST]'
-            },
-            health: '/health [GET]'
-        }
-    });
+  res.json({ 
+      message: 'Password Reset API is running',
+      endpoints: {
+          auth: {
+              register: '/api/auth/register',
+              login: '/api/auth/login',
+              forgotPassword: '/api/auth/forgot-password',
+              resetPassword: '/api/auth/reset-password/:token'  // Added :token parameter
+          },
+          health: '/health'
+      }
+  });
 });
+
 
 // API routes with error handling
 app.use('/api/auth', require('./routes/authRoutes'));
