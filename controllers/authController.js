@@ -7,6 +7,8 @@ require('dotenv').config();
 // Register user
 // controllers/authController.js
 
+// controllers/authController.js
+
 exports.register = async (req, res) => {
     try {
         // Add detailed logging
@@ -36,20 +38,29 @@ exports.register = async (req, res) => {
         }
 
         // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ 
+            $or: [
+                { email: email },
+                { username: username }
+            ]
+        });
+        
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                message: 'User already exists'
+                message: 'User with this email or username already exists'
             });
         }
 
-        // Create new user
+        // Create new user with explicit field assignment
         const newUser = new User({
-            username,
-            email,
-            password
+            username: username,  // explicit assignment
+            email: email,
+            password: password
         });
+
+        // Log the user object before saving
+        console.log('Attempting to save user:', newUser);
 
         await newUser.save();
 
@@ -71,6 +82,7 @@ exports.register = async (req, res) => {
         });
     }
 };
+
 
 
 
