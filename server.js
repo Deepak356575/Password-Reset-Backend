@@ -15,6 +15,15 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// At the top of your server.js or app.js
+app.use((req, res, next) => {
+  res.header('Cache-Control', 'no-store');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+
 // Important: Add body parsing middleware before routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
