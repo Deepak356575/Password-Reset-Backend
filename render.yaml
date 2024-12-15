@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: password-reset-backend
+    env: node
+    rootDir: Backend
+    buildCommand: cd Backend && npm install
+    startCommand: cd Backend && npm start
+    nodeVersion: 18.x
+    envVars:
+      - key: NODE_ENV
+        value: production
