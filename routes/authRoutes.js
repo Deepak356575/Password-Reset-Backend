@@ -1,29 +1,44 @@
+// routes/authRoutes.js
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
-// GET route to show available endpoints
+// GET route to show API documentation
 router.get('/', (req, res) => {
     res.json({
-        message: 'Auth API is working',
-        availableRoutes: {
-            register: 'POST /api/auth/register',
-            login: 'POST /api/auth/login',
-            forgotPassword: 'POST /api/auth/forgot-password',
-            resetPassword: 'POST /api/auth/reset-password'
+        message: 'Auth API endpoints',
+        endpoints: {
+            register: {
+                method: 'POST',
+                url: '/api/auth/register',
+                body: {
+                    email: 'required|string',
+                    password: 'required|string'
+                }
+            },
+            login: {
+                method: 'POST',
+                url: '/api/auth/login',
+                body: {
+                    email: 'required|string',
+                    password: 'required|string'
+                }
+            },
+            forgotPassword: {
+                method: 'POST',
+                url: '/api/auth/forgot-password',
+                body: {
+                    email: 'required|string'
+                }
+            }
         }
     });
 });
 
-// Auth routes
+// Auth routes - all are POST methods
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-
-// Password reset routes
 router.post('/forgot-password', authController.forgotPassword);
-router.post('/reset-password/:token', authController.resetPassword);
-
-// Optional: Verify reset token route
-router.get('/reset-password/:token', authController.verifyResetToken);
+router.post('/reset-password', authController.resetPassword);
 
 module.exports = router;
