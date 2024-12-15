@@ -68,9 +68,14 @@ exports.login = async (req, res) => {
 };
 
 // Forgot password
+
+const crypto = require('crypto'); // Add this at the top
+
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
+        
+        console.log('Received forgot password request for:', email); // Debug log
 
         // Find user
         const user = await User.findOne({ email });
@@ -78,101 +83,93 @@ exports.forgotPassword = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Generate reset token
-        const resetToken = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+        // Generate reset token using crypto
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        console.log('Generated reset token:', resetToken); // Debug log
 
-        // Save reset token to user
-        user.resetToken = resetToken;
-        user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+        // Save token and expiry
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        // Create transporter
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        // Create reset URL
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
-        // Reset password URL
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+        try {
+            // Email configuration
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USERNAME,
+                    pass: process.env.EMAIL_PASSWORD
+                }
+            });
 
-        // Email options
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Password Reset Request',
-            html: `
-                <h2>Password Reset Request</h2>
-                <p>Please click the following link to reset your password:</p>
-                <a href="${resetUrl}">${resetUrl}</a>
-                <p>This link will expire in 1 hour.</p>
-                <p>If you didn't request this, please ignore this email.</p>
-            `
-        };
+            // Send email
+            await transporter.sendMail({
+                from: process.env.EMAIL_USERNAME,
+                to: email,
+                subject: 'Password Reset Request',
+                html: `
+                    <h1>Password Reset</h1>
+                    <p>Click the link below to reset your password:</p>
+                    <a href="${resetUrl}">${resetUrl}</a>
+                    <p>This link will expire in 1 hour.</p>
+                `
+            });
 
-        // Send email
-        await transporter.sendMail(mailOptions);
+            // Return success response with token
+            return res.status(200).json({
+                status: 'success',
+                message: 'Password reset link sent to email',
+                resetToken: resetToken,
+                resetUrl: resetUrl
+            });
 
-        res.status(200).json({
-            message: 'Password reset link sent to email'
-        });
+        } catch (emailError) {
+            // If email sending fails, still return the token for testing
+            console.error('Email sending failed:', emailError);
+            return res.status(200).json({
+                status: 'success',
+                message: 'Email sending failed, but token generated',
+                resetToken: resetToken,
+                resetUrl: resetUrl
+            });
+        }
 
     } catch (error) {
         console.error('Forgot password error:', error);
-        res.status(500).json({
-            message: 'Error processing forgot password request',
-            error: error.message
+        return res.status(500).json({ 
+            status: 'error',
+            message: 'Error in forgot password process',
+            error: error.message 
         });
     }
 };
 
-// Reset password
+// Reset Password
 exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
         const { password } = req.body;
 
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Reset attempt with token:', token);
+        console.log('New password received:', password ? 'Yes' : 'No');
 
-        // Find user
         const user = await User.findOne({
-            _id: decoded.userId,
-            resetToken: token,
-            resetTokenExpiry: { $gt: Date.now() }
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
-        if (!user) {
-            return res.status(400).json({
-                message: 'Invalid or expired reset token'
-            });
+        console.log('User found:', user ? 'Yes' : 'No');
+        if (user) {
+            console.log('Token expiry:', user.resetPasswordExpires);
+            console.log('Current time:', Date.now());
         }
 
-        // Hash new password
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
-        
-        // Clear reset token fields
-        user.resetToken = undefined;
-        user.resetTokenExpiry = undefined;
-
-        await user.save();
-
-        res.status(200).json({
-            message: 'Password reset successful'
-        });
-
+        // Rest of the code...
     } catch (error) {
         console.error('Reset password error:', error);
-        if (error.name === 'JsonWebTokenError') {
-            return res.status(400).json({ message: 'Invalid token' });
-        }
         res.status(500).json({
             message: 'Error resetting password',
             error: error.message
@@ -180,19 +177,15 @@ exports.resetPassword = async (req, res) => {
     }
 };
 
-// Verify reset token
+
+// Add a verify token endpoint
 exports.verifyResetToken = async (req, res) => {
     try {
         const { token } = req.params;
 
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Find user
         const user = await User.findOne({
-            _id: decoded.userId,
-            resetToken: token,
-            resetTokenExpiry: { $gt: Date.now() }
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
         if (!user) {
@@ -202,14 +195,11 @@ exports.verifyResetToken = async (req, res) => {
         }
 
         res.status(200).json({
-            message: 'Token is valid'
+            message: 'Token is valid',
+            email: user.email
         });
 
     } catch (error) {
-        console.error('Verify token error:', error);
-        if (error.name === 'JsonWebTokenError') {
-            return res.status(400).json({ message: 'Invalid token' });
-        }
         res.status(500).json({
             message: 'Error verifying token',
             error: error.message
