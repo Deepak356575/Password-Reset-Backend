@@ -7,8 +7,8 @@ const app = express();
 // CORS configuration for Netlify frontend
 app.use(cors({
     origin: [
-        'http://localhost:3000',  // local frontend
-        'https://your-netlify-app.netlify.app', // your Netlify domain
+        'http://localhost:5000',  // local frontend
+        'https://ozbourne-pass-reset.netlify.app/', // your Netlify domain
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -21,6 +21,17 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('MongoDB connection error:', err));
+
+    // Add a root route handler
+app.get('/', (req, res) => {
+  res.json({ 
+      message: 'Password Reset API is running',
+      endpoints: {
+          auth: '/api/auth',
+          health: '/health'
+      }
+  });
+});
 
 // API routes
 app.use('/api/auth', require('./routes/authRoutes'));
