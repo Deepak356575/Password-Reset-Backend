@@ -5,30 +5,19 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 // Register user
-// controllers/authController.js
 
-// controllers/authController.js
 
 exports.register = async (req, res) => {
     try {
-        // Add detailed logging
-        console.log('Received request body:', req.body);
-        console.log('Content-Type:', req.headers['content-type']);
+        console.log('Register endpoint hit with body:', req.body);
 
         const { username, email, password } = req.body;
-
-        // Add validation logging
-        console.log('Extracted data:', { 
-            username: username || 'missing', 
-            email: email || 'missing', 
-            password: password ? 'provided' : 'missing' 
-        });
 
         // Validate required fields
         if (!username || !email || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide all required fields',
+                message: 'All fields are required',
                 missing: {
                     username: !username,
                     email: !email,
@@ -37,14 +26,11 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ 
-            $or: [
-                { email: email },
-                { username: username }
-            ]
+        // Check if user exists
+        const existingUser = await User.findOne({
+            $or: [{ email }, { username }]
         });
-        
+
         if (existingUser) {
             return res.status(400).json({
                 success: false,
@@ -52,36 +38,34 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Create new user with explicit field assignment
-        const newUser = new User({
-            username: username,  // explicit assignment
-            email: email,
-            password: password
+        // Create new user
+        const user = new User({
+            username,
+            email,
+            password
         });
 
-        // Log the user object before saving
-        console.log('Attempting to save user:', newUser);
+        await user.save();
 
-        await newUser.save();
-
-        return res.status(201).json({
+        res.status(201).json({
             success: true,
-            message: 'User registered successfully',
+            message: 'Registration successful',
             user: {
-                username: newUser.username,
-                email: newUser.email
+                username: user.username,
+                email: user.email
             }
         });
 
     } catch (error) {
         console.error('Registration error:', error);
-        return res.status(500).json({
+        res.status(500).json({
             success: false,
             message: 'Error registering user',
             error: error.message
         });
     }
 };
+
 
 
 
