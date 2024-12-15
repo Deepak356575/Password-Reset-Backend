@@ -7,7 +7,18 @@ require('dotenv').config();
 // Register user
 exports.register = async (req, res) => {
     try {
+
+        console.log('Received registration data:', req.body);
+
         const { username, email, password } = req.body;
+
+        // Validate required fields
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide all required fields'
+            });
+        }
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
