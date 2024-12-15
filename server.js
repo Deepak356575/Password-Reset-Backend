@@ -15,8 +15,6 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-
-
 // Important: Add body parsing middleware before routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,48 +34,66 @@ mongoose.connect(process.env.MONGODB_URI)
     });
 
 // Root route with API documentation
-// Root route with API documentation
 app.get('/', (req, res) => {
-  res.json({ 
-      message: 'Password Reset API is running',
-      endpoints: {
-          auth: {
-              register: '/api/auth/register',
-              login: '/api/auth/login',
-              forgotPassword: '/api/auth/forgot-password',
-              resetPassword: '/api/auth/reset-password/:token'  // Added :token parameter
-          },
-          health: '/health'
-      }
-  });
+    try {
+        res.status(200).json({ 
+            status: 'success',
+            message: 'Password Reset API is running',
+            endpoints: {
+                auth: {
+                    register: '/api/auth/register',
+                    login: '/api/auth/login',
+                    forgotPassword: '/api/auth/forgot-password',
+                    resetPassword: '/api/auth/reset-password/:token'
+                },
+                health: '/health'
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Error loading API documentation',
+            error: error.message
+        });
+    }
 });
 
-
-// API routes with error handling
+// API routes
 app.use('/api/auth', require('./routes/authRoutes'));
 
 // Health check route
 app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'ok',
-        timestamp: new Date(),
-        mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-    });
+    try {
+        res.status(200).json({ 
+            status: 'success',
+            timestamp: new Date(),
+            mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+            service: 'operational'
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Health check failed',
+            error: error.message
+        });
+    }
 });
 
 // Handle 404 errors
-app.use((req, res, next) => {
+app.use((req, res) => {
     res.status(404).json({ 
+        status: 'error',
         message: 'Route not found',
         requested: `${req.method} ${req.path}`
     });
 });
 
-// Global error handling
+// Global error handling middleware
 app.use((err, req, res, next) => {
     console.error('Error:', err);
     res.status(err.status || 500).json({ 
-        message: err.message || 'Something went wrong!',
+        status: 'error',
+        message: err.message || 'Internal server error',
         error: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 });
