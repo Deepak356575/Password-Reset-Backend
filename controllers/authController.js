@@ -133,7 +133,7 @@ exports.resetPassword = async (req, res) => {
         }
 
         // Hash the token from the URL
-        const resetPasswordToken = XXXXXX
+        const resetPasswordToken = crypto
             .createHash('sha256')
             .update(token)
             .digest('hex');
