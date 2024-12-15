@@ -9,6 +9,13 @@ exports.register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
+        // Validate input
+        if (!username || !email || !password) {
+            return res.status(400).json({ 
+                message: 'Please provide username, email and password' 
+            });
+        }
+
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -23,13 +30,20 @@ exports.register = async (req, res) => {
         });
 
         await user.save();
-        res.status(201).json({ message: 'User registered successfully' });
+        res.status(201).json({ 
+            message: 'User registered successfully',
+            userId: user._id
+        });
 
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({ message: 'Error registering user', error: error.message });
+        res.status(500).json({ 
+            message: 'Error registering user', 
+            error: error.message 
+        });
     }
 };
+
 
 // Login user
 exports.login = async (req, res) => {
@@ -148,26 +162,49 @@ exports.forgotPassword = async (req, res) => {
 };
 
 // Reset Password
+// Reset Password
 exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
-        const { password } = req.body;
+        const { newPassword } = req.body;  // Changed from password to newPassword
+
+        // Validation
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                message: 'Token and new password are required'
+            });
+        }
 
         console.log('Reset attempt with token:', token);
-        console.log('New password received:', password ? 'Yes' : 'No');
+        console.log('New password received:', !!newPassword);
 
+        // Find user with valid reset token
         const user = await User.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() }
         });
 
         console.log('User found:', user ? 'Yes' : 'No');
-        if (user) {
-            console.log('Token expiry:', user.resetPasswordExpires);
-            console.log('Current time:', Date.now());
+
+        if (!user) {
+            return res.status(400).json({
+                message: 'Invalid or expired reset token'
+            });
         }
 
-        // Rest of the code...
+        // Update password
+        user.password = newPassword;
+        
+        // Clear reset token fields
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+
+        res.status(200).json({
+            message: 'Password reset successful'
+        });
+
     } catch (error) {
         console.error('Reset password error:', error);
         res.status(500).json({
@@ -176,6 +213,7 @@ exports.resetPassword = async (req, res) => {
         });
     }
 };
+
 
 
 // Add a verify token endpoint
