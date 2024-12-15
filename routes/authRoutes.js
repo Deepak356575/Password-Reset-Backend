@@ -13,14 +13,16 @@ router.get('/verify-token/:token', authController.verifyResetToken);
 router.get('/health', (req, res) => {
     res.json({
         message: "Password Reset API is running",
+        version: "1.0.1",  // Added version to track changes
+        lastUpdated: new Date().toISOString(),
         endpoints: {
             auth: {
-                register: "/api/auth/register",          // Removed [POST]
-                login: "/api/auth/login",               // Removed [POST]
-                forgotPassword: "/api/auth/forgot-password", // Removed [POST]
-                resetPassword: "/api/auth/reset-password/:token"  // Added :token parameter
+                register: "/api/auth/register",
+                login: "/api/auth/login",
+                forgotPassword: "/api/auth/forgot-password",
+                resetPassword: "/api/auth/reset-password/:token"
             },
-            health: "/health"                           // Removed [GET]
+            health: "/health"
         }
     });
 });
