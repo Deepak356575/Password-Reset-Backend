@@ -95,7 +95,6 @@ exports.login = async (req, res) => {
 
 
 // authController.js or similar
-const { sendResetPasswordEmail } = require('../utils/emailService');
 
 const handleForgotPassword = async (req, res) => {
   try {
