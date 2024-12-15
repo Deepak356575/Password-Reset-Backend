@@ -6,7 +6,7 @@ const authController = require('../controllers/authController');
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/forgot-password', authController.forgotPassword);
-router.post('/reset-password/:token', authController.resetPassword); // Note the :token parameter
+router.post('/reset-password/:token', authController.resetPassword);
 router.get('/verify-token/:token', authController.verifyResetToken);
 
 // Health check endpoint
@@ -15,13 +15,21 @@ router.get('/health', (req, res) => {
         message: "Password Reset API is running",
         endpoints: {
             auth: {
-                register: "/api/auth/register [POST]",
-                login: "/api/auth/login [POST]",
-                forgotPassword: "/api/auth/forgot-password [POST]",
-                resetPassword: "/api/auth/reset-password/:token [POST]", // Updated to show token parameter
-                verifyToken: "/api/auth/verify-token/:token [GET]"
+                register: "/api/auth/register",
+                login: "/api/auth/login",
+                forgotPassword: "/api/auth/forgot-password",
+                resetPassword: "/api/auth/reset-password/:token",
+                verifyToken: "/api/auth/verify-token/:token"
             },
-            health: "/health [GET]"
+            health: "/health"
+        },
+        methods: {
+            register: "POST",
+            login: "POST",
+            forgotPassword: "POST",
+            resetPassword: "POST",
+            verifyToken: "GET",
+            health: "GET"
         }
     });
 });
