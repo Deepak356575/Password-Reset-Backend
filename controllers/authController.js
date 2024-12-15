@@ -268,4 +268,12 @@ exports.verifyResetToken = async (req, res) => {
   }
 };
 
-module.exports = { handleForgotPassword };
+module.exports = {
+  register,
+  login,
+  handleForgotPassword,
+  resetPassword,
+  getCurrentUser,
+  changePassword,
+  verifyResetToken
+};
