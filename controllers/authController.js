@@ -114,67 +114,59 @@ exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
         
-        console.log('Received forgot password request for:', email); // Debug log
-
-        // Find user
+        // Add these debug logs
+        console.log('Environment Variables:');
+        console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+        
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Generate reset token using crypto
         const resetToken = crypto.randomBytes(32).toString('hex');
-        console.log('Generated reset token:', resetToken); // Debug log
-
-        // Save token and expiry
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        // Create reset URL
-        const resetUrl = `${process.env.FRONTEND_URL || 'https://ozbourne-pass-reset.netlify.app'}/reset-password/${resetToken}`;
-
-        try {
-            // Email configuration
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
-            });
-
-            // Send email
-            await transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: 'Password Reset Request',
-                html: `
-                    <h1>Password Reset</h1>
-                    <p>Click the link below to reset your password:</p>
-                    <a href="${resetUrl}">${resetUrl}</a>
-                    <p>This link will expire in 1 hour.</p>
-                `
-            });
-
-            // Return success response with token
-            return res.status(200).json({
-                status: 'success',
-                message: 'Password reset link sent to email',
-                resetToken: resetToken,
-                resetUrl: resetUrl
-            });
-
-        } catch (emailError) {
-            // If email sending fails, still return the token for testing
-            console.error('Email sending failed:', emailError);
-            return res.status(200).json({
-                status: 'success',
-                message: 'Email sending failed, but token generated',
-                resetToken: resetToken,
-                resetUrl: resetUrl
+        // Force the production URL if localhost is detected
+        const frontendURL = process.env.FRONTEND_URL;
+        if (!frontendURL || frontendURL.includes('localhost')) {
+            console.error('Invalid FRONTEND_URL detected:', frontendURL);
+            return res.status(500).json({ 
+                status: 'error',
+                message: 'Invalid frontend URL configuration'
             });
         }
+
+        const resetUrl = `${frontendURL}/reset-password/${resetToken}`;
+        console.log('Reset URL generated:', resetUrl); // Debug log
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Password Reset Request',
+            html: `
+                <h1>Password Reset</h1>
+                <p>Click the link below to reset your password:</p>
+                <a href="${resetUrl}">${resetUrl}</a>
+                <p>This link will expire in 1 hour.</p>
+            `
+        };
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        await transporter.sendMail(mailOptions);
+        
+        return res.status(200).json({
+            status: 'success',
+            message: 'Password reset link sent to email'
+        });
 
     } catch (error) {
         console.error('Forgot password error:', error);
@@ -185,6 +177,7 @@ exports.forgotPassword = async (req, res) => {
         });
     }
 };
+
 
 // Reset Password
 // Reset Password

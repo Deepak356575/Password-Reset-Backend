@@ -1,4 +1,6 @@
 require('dotenv').config();
+console.log('Server starting with FRONTEND_URL:', process.env.FRONTEND_URL);
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
