@@ -187,12 +187,12 @@ exports.resetPassword = async (req, res) => {
         const { newPassword } = req.body;  // Changed from password to newPassword
 
         // Validation
-        if (!token || !newPassword) {
+        if (!token || !password) {
             return res.status(400).json({
-                message: 'Token and new password are required'
+                status: 'error',
+                message: 'Password and token are required'
             });
         }
-
         console.log('Reset attempt with token:', token);
         console.log('New password received:', !!newPassword);
 
