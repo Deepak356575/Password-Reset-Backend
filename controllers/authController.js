@@ -180,18 +180,15 @@ exports.forgotPassword = async (req, res) => {
 
 
 // Reset Password
-// Reset Password
 
-
-  exports.resetPassword = async (req, res) => {
-    res.header('Access-Control-Allow-Origin', 'https://ozbourne-pass-reset.netlify.app');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
         const { newPassword } = req.body;
 
-        // Validation
+        console.log('Reset attempt with token:', token); // Debug log
+
+        // Validate input
         if (!token || !newPassword) {
             return res.status(400).json({
                 status: 'error',
@@ -199,16 +196,13 @@ exports.forgotPassword = async (req, res) => {
             });
         }
 
-        console.log('Reset attempt with token:', token);
-        console.log('New password received:', !!newPassword);
-
-        // Find user with valid reset token
+        // Find user with valid reset token and check expiration
         const user = await User.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() }
         });
 
-        console.log('User found:', user ? 'Yes' : 'No');
+        console.log('User found:', user ? 'Yes' : 'No'); // Debug log
 
         if (!user) {
             return res.status(400).json({
@@ -218,12 +212,11 @@ exports.forgotPassword = async (req, res) => {
         }
 
         // Hash the new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update password
+        // Update user's password and clear reset token fields
         user.password = hashedPassword;
-        
-        // Clear reset token fields
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
 
@@ -231,7 +224,7 @@ exports.forgotPassword = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            message: 'Password reset successful'
+            message: 'Password has been reset successfully'
         });
 
     } catch (error) {
@@ -242,9 +235,7 @@ exports.forgotPassword = async (req, res) => {
             error: error.message
         });
     }
-};
-
-
+}
 
 
 // Add a verify token endpoint
