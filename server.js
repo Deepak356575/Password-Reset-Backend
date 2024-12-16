@@ -14,9 +14,9 @@ const corsOptions = {
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
     credentials: true,
     maxAge: 86400, // 24 hours
-    optionsSuccessStatus: 204
+    optionsSuccessStatus: 200
 };
-
+    
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
