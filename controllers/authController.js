@@ -186,55 +186,43 @@ exports.resetPassword = async (req, res) => {
         const { token } = req.params;
         const { newPassword } = req.body;
 
-        console.log('Reset password attempt:', {
-            tokenLength: token?.length,
-            hasPassword: !!newPassword,
-            passwordLength: newPassword?.length
+        console.log('Reset password attempt received:', {
+            token: token ? 'exists' : 'missing',
+            newPassword: newPassword ? 'exists' : 'missing'
         });
 
-         // Validate input
+        // Input validation
         if (!token || !newPassword) {
-            console.log('Missing required fields:', {
-                hasToken: !!token,
-                hasPassword: !!newPassword
-            });
             return res.status(400).json({
                 status: 'error',
-                message: 'Password and token are required',
-                details: {
-                    missingToken: !token,
-                    missingPassword: !newPassword
-                }
+                message: 'Password and token are required'
             });
         }
 
-        // Find user with valid reset token and check expiration
+        // Find user with valid reset token
         const user = await User.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() }
         });
 
         console.log('User search result:', {
-            userFound: !!user,
-            tokenExpiry: user?.resetPasswordExpires,
-            currentTime: new Date()
+            found: !!user,
+            tokenMatch: user?.resetPasswordToken === token,
+            tokenExpired: user?.resetPasswordExpires < Date.now()
         });
+
         if (!user) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Invalid or expired reset token',
-                details: {
-                    tokenProvided: token,
-                    currentTime: new Date(),
-                }
+                message: 'Invalid or expired reset token'
             });
         }
 
-        // Hash the new password
+        // Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update user's password and clear reset token fields
+        // Update user
         user.password = hashedPassword;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
@@ -250,11 +238,10 @@ exports.resetPassword = async (req, res) => {
         console.error('Reset password error:', error);
         res.status(500).json({
             status: 'error',
-            message: 'Error resetting password',
-            error: error.message
+            message: 'Error resetting password'
         });
     }
-}
+};
 
 
 // Add a verify token endpoint

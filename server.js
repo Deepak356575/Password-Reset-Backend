@@ -13,7 +13,7 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
     credentials: true,
-    preflightContinue: false,
+    maxAge: 86400, // 24 hours
     optionsSuccessStatus: 204
 };
 
@@ -23,6 +23,7 @@ app.use(cors(corsOptions));
 // Handle preflight requests
 app.options('*', cors(corsOptions));
 
+// Additional headers middleware
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'https://ozbourne-pass-reset.netlify.app');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -32,24 +33,29 @@ app.use((req, res, next) => {
     res.header('X-Content-Type-Options', 'nosniff');
     res.header('X-Frame-Options', 'DENY');
     res.header('X-XSS-Protection', '1; mode=block');
+    
+    // Handle OPTIONS method
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
     next();
 });
 
 // Body parsing middleware - IMPORTANT: Place these before routes
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-app.options('*', cors());
 
 // Request logging middleware with body logging
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    console.log('Request headers:', req.headers);
     if (req.method === 'POST') {
         console.log('Request body:', req.body);
     }
     next();
 });
 
-// MongoDB connection with better error handling and options
+// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => {
@@ -114,13 +120,7 @@ app.use((req, res) => {
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        status: 'error',
-        message: 'Something went wrong!',
-        error: err.message
-    });
-
+    console.error('Global error handler:', err.stack);
     
     // Handle mongoose validation errors
     if (err.name === 'ValidationError') {
