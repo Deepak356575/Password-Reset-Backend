@@ -181,24 +181,12 @@ exports.forgotPassword = async (req, res) => {
 
 // Reset Password
 // Reset Password
-const verifyResetToken = async (token) => {
-    try {
-        const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
-        
-        if (!user) {
-            throw new Error('Invalid or expired reset token');
-        }
-        
-        return user;
-    } catch (error) {
-        throw new Error('Invalid or expired reset token');
-    }
-};
+
 
   exports.resetPassword = async (req, res) => {
+    res.header('Access-Control-Allow-Origin', 'https://ozbourne-pass-reset.netlify.app');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     try {
         const { token } = req.params;
         const { newPassword } = req.body;
