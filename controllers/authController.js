@@ -186,13 +186,25 @@ exports.resetPassword = async (req, res) => {
         const { token } = req.params;
         const { newPassword } = req.body;
 
-        console.log('Reset attempt with token:', token); // Debug log
+        console.log('Reset password attempt:', {
+            tokenLength: token?.length,
+            hasPassword: !!newPassword,
+            passwordLength: newPassword?.length
+        });
 
-        // Validate input
+         // Validate input
         if (!token || !newPassword) {
+            console.log('Missing required fields:', {
+                hasToken: !!token,
+                hasPassword: !!newPassword
+            });
             return res.status(400).json({
                 status: 'error',
-                message: 'Password and token are required'
+                message: 'Password and token are required',
+                details: {
+                    missingToken: !token,
+                    missingPassword: !newPassword
+                }
             });
         }
 
@@ -202,12 +214,19 @@ exports.resetPassword = async (req, res) => {
             resetPasswordExpires: { $gt: Date.now() }
         });
 
-        console.log('User found:', user ? 'Yes' : 'No'); // Debug log
-
+        console.log('User search result:', {
+            userFound: !!user,
+            tokenExpiry: user?.resetPasswordExpires,
+            currentTime: new Date()
+        });
         if (!user) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Invalid or expired reset token'
+                message: 'Invalid or expired reset token',
+                details: {
+                    tokenProvided: token,
+                    currentTime: new Date(),
+                }
             });
         }
 
