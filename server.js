@@ -50,15 +50,12 @@ app.use((req, res, next) => {
 });
 
 // MongoDB connection with better error handling and options
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-});
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    });
 
 // Root route with API documentation
 app.get('/', (req, res) => {
