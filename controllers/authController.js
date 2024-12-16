@@ -181,18 +181,36 @@ exports.forgotPassword = async (req, res) => {
 
 // Reset Password
 // Reset Password
-exports.resetPassword = async (req, res) => {
+const verifyResetToken = async (token) => {
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+        
+        if (!user) {
+            throw new Error('Invalid or expired reset token');
+        }
+        
+        return user;
+    } catch (error) {
+        throw new Error('Invalid or expired reset token');
+    }
+};
+
+  exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
-        const { newPassword } = req.body;  // Changed from password to newPassword
+        const { newPassword } = req.body;
 
         // Validation
-        if (!token || !password) {
+        if (!token || !newPassword) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Password and token are required'
             });
         }
+
         console.log('Reset attempt with token:', token);
         console.log('New password received:', !!newPassword);
 
@@ -206,12 +224,16 @@ exports.resetPassword = async (req, res) => {
 
         if (!user) {
             return res.status(400).json({
+                status: 'error',
                 message: 'Invalid or expired reset token'
             });
         }
 
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
         // Update password
-        user.password = newPassword;
+        user.password = hashedPassword;
         
         // Clear reset token fields
         user.resetPasswordToken = undefined;
@@ -220,17 +242,20 @@ exports.resetPassword = async (req, res) => {
         await user.save();
 
         res.status(200).json({
+            status: 'success',
             message: 'Password reset successful'
         });
 
     } catch (error) {
         console.error('Reset password error:', error);
         res.status(500).json({
+            status: 'error',
             message: 'Error resetting password',
             error: error.message
         });
     }
 };
+
 
 
 
