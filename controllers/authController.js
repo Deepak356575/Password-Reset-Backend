@@ -186,29 +186,57 @@ exports.resetPassword = async (req, res) => {
         const { token } = req.params;
         const { newPassword } = req.body;
 
-        console.log('Reset password attempt received:', {
-            token: token ? 'exists' : 'missing',
-            newPassword: newPassword ? 'exists' : 'missing'
+        // Debug logging
+        console.log('Reset Password Request Details:', {
+            token: token ? `${token.substring(0, 10)}...` : 'missing',
+            hasPassword: !!newPassword,
+            passwordLength: newPassword?.length,
+            requestBody: req.body,
+            contentType: req.headers['content-type']
         });
 
-        // Input validation
-        if (!token || !newPassword) {
+        // Input validation with specific error messages
+        if (!token) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Password and token are required'
+                message: 'Reset token is required'
             });
         }
 
-        // Find user with valid reset token
+        if (!newPassword) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'New password is required'
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Password must be at least 6 characters long'
+            });
+        }
+
+        // Find user and log the search criteria
+        console.log('Searching for user with token:', {
+            tokenLength: token.length,
+            searchCriteria: {
+                resetPasswordToken: token,
+                resetPasswordExpires: { $gt: Date.now() }
+            }
+        });
+
         const user = await User.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() }
         });
 
+        // Log user search results
         console.log('User search result:', {
             found: !!user,
             tokenMatch: user?.resetPasswordToken === token,
-            tokenExpired: user?.resetPasswordExpires < Date.now()
+            tokenExpired: user?.resetPasswordExpires < Date.now(),
+            userEmail: user?.email ? `${user.email.substring(0, 3)}...` : 'none'
         });
 
         if (!user) {
@@ -229,19 +257,26 @@ exports.resetPassword = async (req, res) => {
 
         await user.save();
 
-        res.status(200).json({
+        console.log('Password reset successful for user:', user.email);
+
+        return res.status(200).json({
             status: 'success',
             message: 'Password has been reset successfully'
         });
 
     } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({
+        console.error('Reset password error:', {
+            message: error.message,
+            stack: error.stack
+        });
+        return res.status(500).json({
             status: 'error',
-            message: 'Error resetting password'
+            message: 'Error resetting password',
+            error: error.message
         });
     }
 };
+
 
 
 // Add a verify token endpoint
