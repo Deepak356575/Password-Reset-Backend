@@ -8,12 +8,15 @@ const app = express();
 
 // CORS configuration with more specific options
 app.use(express.json());
-app.use(cors({
+const corsOptions = {
     origin: 'https://ozbourne-pass-reset.netlify.app',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
+
+// Apply CORS globally
+app.use(cors(corsOptions));
 
 // Body parsing middleware - IMPORTANT: Place these before routes
 app.use(express.json()); // for parsing application/json
