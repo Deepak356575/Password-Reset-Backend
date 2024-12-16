@@ -117,7 +117,7 @@ app.use((err, req, res, next) => {
         message: 'Something went wrong!',
         error: err.message
     });
-});
+
     
     // Handle mongoose validation errors
     if (err.name === 'ValidationError') {
@@ -142,9 +142,10 @@ app.use((err, req, res, next) => {
         message: err.message || 'Internal server error',
         error: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
+});
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Health check available at http://localhost:${PORT}/health`);
 });
