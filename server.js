@@ -7,20 +7,32 @@ const mongoose = require('mongoose');
 const app = express();
 
 // CORS configuration with more specific options
-app.use(express.json());
-const corsOptions = {
-    origin: 'https://ozbourne-pass-reset.netlify.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-};
+app.use(cors({
+    origin: ['https://ozbourne-pass-reset.netlify.app', 'http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+}));
 
-// Apply CORS globally
-app.use(cors(corsOptions));
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'https://ozbourne-pass-reset.netlify.app');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    // Add additional security headers
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'DENY');
+    res.header('X-XSS-Protection', '1; mode=block');
+    next();
+});
 
 // Body parsing middleware - IMPORTANT: Place these before routes
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.options('*', cors());
 
 // Request logging middleware with body logging
 app.use((req, res, next) => {
@@ -99,7 +111,13 @@ app.use((req, res) => {
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
+    console.error(err.stack);
+    res.status(500).json({
+        status: 'error',
+        message: 'Something went wrong!',
+        error: err.message
+    });
+});
     
     // Handle mongoose validation errors
     if (err.name === 'ValidationError') {
@@ -124,7 +142,6 @@ app.use((err, req, res, next) => {
         message: err.message || 'Internal server error',
         error: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
-});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
