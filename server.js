@@ -9,9 +9,7 @@ const app = express();
 // CORS configuration with more specific options
 app.use(express.json());
 app.use(cors({
-    origin: [
-        'https://ozbourne-pass-reset.netlify.app'
-    ],
+    origin: 'https://ozbourne-pass-reset.netlify.app',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
