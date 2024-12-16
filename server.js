@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 const app = express();
 
 // CORS configuration with more specific options
-app.use(cors({
+const corsOptions = {
     origin: ['https://ozbourne-pass-reset.netlify.app', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
@@ -15,7 +15,7 @@ app.use(cors({
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204
-}));
+};
 
 // Apply CORS middleware
 app.use(cors(corsOptions));
